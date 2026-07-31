@@ -26,15 +26,15 @@ Voices.all = {
     label = "Kind",
     blurb = "warm and gentle",
     done = {
-      "your session is done — would love for you to take a look 😊",
-      "all finished! come see what it did whenever you can 💛",
+      "your session is done — would love for you to take a look :)",
+      "all finished! come see what it did whenever you can :)",
     },
     idle = {
-      "is waiting on you — no rush, just whenever you're free 😊",
-      "has a question for you when you have a moment 💬",
+      "is waiting on you — no rush, just whenever you're free :)",
+      "has a question for you when you have a moment :)",
     },
     ["end"] = {
-      "session closed — hope it went well 💛",
+      "session closed — hope it went well :)",
     },
   },
 
@@ -42,15 +42,15 @@ Voices.all = {
     label = "Hype",
     blurb = "loud and caffeinated",
     done = {
-      "IS DONE. GO LOOK 🔥",
-      "just wrapped — go see it, it cooked 🚀",
+      "IS DONE. GO LOOK :D",
+      "just wrapped — go see it, it cooked :D",
     },
     idle = {
-      "NEEDS YOU. RIGHT NOW ⚡",
-      "is stuck waiting on you — unblock it! 💥",
+      "NEEDS YOU. RIGHT NOW >:O",
+      "is stuck waiting on you — unblock it! :O",
     },
     ["end"] = {
-      "session closed. good run 🏁",
+      "session closed. good run \\o/",
     },
   },
 
@@ -58,15 +58,15 @@ Voices.all = {
     label = "Chill",
     blurb = "unbothered",
     done = {
-      "all wrapped up whenever you're ready ✌️",
-      "finished. it'll be here when you get back 🌊",
+      "all wrapped up whenever you're ready :]",
+      "finished. it'll be here when you get back :]",
     },
     idle = {
-      "is waiting on you, no pressure ✌️",
-      "paused for you whenever you wander back 🌿",
+      "is waiting on you, no pressure :]",
+      "paused for you whenever you wander back :]",
     },
     ["end"] = {
-      "session closed. later ✌️",
+      "session closed. later :]",
     },
   },
 
@@ -90,15 +90,15 @@ Voices.all = {
     label = "Gremlin",
     blurb = "smug little creature",
     done = {
-      "done. i did the thing 🫡",
-      "finished. you're welcome 😼",
+      "done. i did the thing o7",
+      "finished. you're welcome >:3",
     },
     idle = {
-      "is bored. it wants you 👀",
-      "is just sitting there. waiting. staring 🫠",
+      "is bored. it wants you 0_0",
+      "is just sitting there. waiting. staring -_-",
     },
     ["end"] = {
-      "session closed. bye 🫡",
+      "session closed. bye o7",
     },
   },
 }

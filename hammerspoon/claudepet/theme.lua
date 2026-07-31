@@ -44,6 +44,7 @@ Theme.petWidth   = 96
 
 -- Bubbles
 Theme.bubbleMaxW = 320
+Theme.bubbleWideW = 430   -- summary cards need more room
 Theme.bubblePad  = 14
 Theme.bubbleGap  = 12    -- pet ↔ bubble
 Theme.stackGap   = 8     -- bubble ↔ bubble

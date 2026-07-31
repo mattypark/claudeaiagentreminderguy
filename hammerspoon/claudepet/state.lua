@@ -9,6 +9,7 @@ local defaults = {
   muted = false,
   theme = "night",
   voice = "direct",
+  detail = "name",
 }
 
 local State = {}
@@ -31,6 +32,7 @@ function State.save(state)
     muted = state.muted,
     theme = state.theme,
     voice = state.voice,
+    detail = state.detail,
   })
 end
 

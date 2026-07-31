@@ -25,6 +25,15 @@ local HOTKEY = { { "ctrl", "alt", "cmd" }, "p" }
 -- Wording comes from the chosen personality; only the sound is fixed per event.
 local SOUNDS = { done = "Hero", idle = "Submarine", ["end"] = "Bottle" }
 
+-- How many summary bullets each detail level shows. nil = announcement only.
+local DETAIL_POINTS = { name = nil, summary = 3, full = 6 }
+local DETAIL_ORDER = { "name", "summary", "full" }
+local DETAIL_LABEL = {
+  name    = { label = "Just the name",  blurb = "one line",   example = "bouncebackwebsite · session is done" },
+  summary = { label = "Summary",        blurb = "3 points",   example = "+ three bullets on what it did" },
+  full    = { label = "Full recap",     blurb = "everything", example = "+ up to six bullets, what's left to do" },
+}
+
 local state, pet, stack, menu, menubar, watcher, hotkey
 local offset = 0
 local lastAlert = {}   -- session key -> timestamp
@@ -111,7 +120,18 @@ local function alert(event)
     body = body .. "\n“" .. event.hint .. "”"
   end
 
-  stack:push(event.session, body, function() focusEvent(event) end)
+  -- How much of what the session did to show alongside the announcement.
+  local points = nil
+  local wanted = DETAIL_POINTS[state.detail]
+  if wanted and event.points and #event.points > 0 then
+    points = {}
+    for index, point in ipairs(event.points) do
+      if index > wanted then break end
+      points[#points + 1] = point
+    end
+  end
+
+  stack:push(event.session, body, points, function() focusEvent(event) end)
 end
 
 local function handle(event)
@@ -172,6 +192,31 @@ local function personalityPage()
   return rows
 end
 
+--- The "Bubble detail" page: how much of the session's work to show.
+local function detailPage()
+  local rows = { { kind = "header", title = "BUBBLE DETAIL" } }
+
+  for _, key in ipairs(DETAIL_ORDER) do
+    local option = DETAIL_LABEL[key]
+    local active = (state.detail == key)
+
+    rows[#rows + 1] = {
+      title = (active and "● " or "   ") .. option.label,
+      hint = active and "on" or option.blurb,
+      preview = option.example,
+      fn = function()
+        state.detail = key
+        State.save(state)
+        M.testSummary()        -- show what that level looks like right away
+      end,
+    }
+  end
+
+  rows[#rows + 1] = { kind = "sep" }
+  rows[#rows + 1] = { title = "← Back", submenu = function() return actions() end }
+  return rows
+end
+
 --- The rows shared by the sprite menu and the menu bar item.
 function actions()
   local rows = {}
@@ -201,6 +246,11 @@ function actions()
     title = "Personality",
     hint = "▸ " .. Voices.get(state.voice).label,
     submenu = personalityPage,
+  }
+  rows[#rows + 1] = {
+    title = "Bubble detail",
+    hint = "▸ " .. DETAIL_LABEL[state.detail].label,
+    submenu = detailPage,
   }
   rows[#rows + 1] = {
     title = theme.mode == "night" and "Day mode" or "Night mode",
@@ -292,11 +342,32 @@ function M.debug()
     muted = state.muted,
     theme = theme.mode,
     voice = state.voice,
+    detail = state.detail,
     offset = offset,
     position = { x = pet.baseX, y = pet.baseY },
     cards = #stack.cards,
     recent = names,
   }
+end
+
+--- Fire a fake alert carrying summary points, to preview the detail levels.
+function M.testSummary()
+  handle({
+    ts = os.time(),
+    kind = "done",
+    session = "bouncebackwebsite",
+    session_id = "test-summary-" .. tostring(os.time()),
+    cwd = HOME,
+    tty = "",
+    points = {
+      "Rebuilt the hero with the volt accent and the new BrandLogo lockup",
+      "Wired the shop grid and PDP to real variants, subscribe toggle working",
+      "Footer + waitlist moved above the ink footer, legal row added",
+      "Left to do: review /shop/12 spacing and confirm the mobile nav",
+      "Dev server still running on localhost:3020",
+      "Nothing committed yet — say the word and I'll push",
+    },
+  })
 end
 
 --- Fire a fake alert — useful for checking placement after moving the pet.

@@ -29,18 +29,33 @@ local function measure(str, size, width)
   return math.ceil(box.w), math.ceil(box.h)
 end
 
---- Push a new card. `onClick` fires when it is clicked.
-function Stack:push(title, body, onClick)
+--- Push a new card. `points` is an optional list of summary bullets.
+--- `onClick` fires when the card is clicked.
+function Stack:push(title, body, points, onClick)
   local palette = theme.palette()
-  local contentW = theme.bubbleMaxW - theme.bubblePad * 2
+
+  -- Summary cards get more room than a one-line "done" card.
+  local maxW = (points and #points > 0) and theme.bubbleWideW or theme.bubbleMaxW
+  local contentW = maxW - theme.bubblePad * 2
 
   local titleW, titleH = measure(title, theme.titleSize, contentW)
   local bodyW, bodyH = measure(body, theme.bodySize, contentW)
 
+  -- Bullets are laid out one text element each so long ones wrap and indent
+  -- under themselves instead of being cut off.
+  local bullets, bulletsH = {}, 0
+  for _, point in ipairs(points or {}) do
+    local _, ph = measure("•  " .. point, theme.bodySize, contentW)
+    table.insert(bullets, { text = "•  " .. point, h = ph })
+    bulletsH = bulletsH + ph + 4
+  end
+  if #bullets > 0 then bulletsH = bulletsH + 6 end
+
   -- Shrink to the text when it is short, but never clip: height follows the
   -- wrapped body, however many lines that turns out to be.
-  local w = math.min(theme.bubbleMaxW, math.max(titleW, bodyW) + theme.bubblePad * 2)
-  local h = titleH + bodyH + theme.bubblePad * 2 + 5
+  local naturalW = math.max(titleW, bodyW) + theme.bubblePad * 2
+  local w = (#bullets > 0) and maxW or math.min(maxW, naturalW)
+  local h = titleH + bodyH + bulletsH + theme.bubblePad * 2 + 5
 
   local canvas = hs.canvas.new({ x = 0, y = 0, w = w, h = h })
   canvas:level(hs.canvas.windowLevels.floating)
@@ -70,6 +85,16 @@ function Stack:push(title, body, onClick)
       h = bodyH,
     },
   })
+
+  local by = theme.bubblePad + titleH + bodyH + 11
+  for _, bullet in ipairs(bullets) do
+    canvas:appendElements({
+      type = "text",
+      text = styled(bullet.text, theme.bodySize, palette.text),
+      frame = { x = theme.bubblePad, y = by, w = contentW, h = bullet.h },
+    })
+    by = by + bullet.h + 4
+  end
 
   local card = { canvas = canvas, w = w, h = h }
 

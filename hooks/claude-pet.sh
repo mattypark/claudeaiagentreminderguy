@@ -75,6 +75,110 @@ def clean_prompt(text):
     return " ".join(text.split())
 
 
+def clean_markdown(text):
+    """Flatten markdown to plain text a speech bubble can render."""
+    text = re.sub(r"```.*?```", " ", text, flags=re.S)      # code fences
+    text = re.sub(r"`([^`]*)`", r"\1", text)                # inline code
+    text = re.sub(r"\*\*([^*]*)\*\*", r"\1", text)          # bold
+    text = re.sub(r"(?<!\w)\*([^*\n]+)\*(?!\w)", r"\1", text)
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)    # links
+    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.M)      # headings
+    text = re.sub(r"<[^>]*>", " ", text)
+
+    # Tables and rules don't survive as prose — drop them entirely.
+    kept = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.count("|") >= 2:
+            continue
+        if re.fullmatch(r"[-=_*\s]{3,}", stripped):
+            continue
+        kept.append(line)
+    return "\n".join(kept)
+
+
+def summary_points(transcript_path, max_points=6, width=96):
+    """Bullet points describing what the session just did.
+
+    Derived from the last substantive assistant message: its own bullets if it
+    wrote any, otherwise its opening sentences.
+    """
+    if not transcript_path or not os.path.exists(transcript_path):
+        return []
+
+    try:
+        size = os.path.getsize(transcript_path)
+        with open(transcript_path, "rb") as f:
+            f.seek(max(0, size - 400_000))
+            tail = f.read().decode("utf-8", "ignore")
+    except Exception:
+        return []
+
+    def bullets_in(text):
+        found = []
+        for line in text.splitlines():
+            stripped = line.strip()
+            if re.match(r"^([-*•]|\d+[.)])\s+", stripped):
+                point = re.sub(r"^([-*•]|\d+[.)])\s+", "", stripped).strip(" :—-")
+                if len(point) > 6:
+                    found.append(point)
+        return found
+
+    # Walk backwards over recent assistant turns and take the last one that
+    # actually reports work — a short "on it" reply is not a summary.
+    fallback = ""
+    body, points = "", []
+    checked = 0
+
+    for line in reversed(tail.splitlines()):
+        if checked >= 12:
+            break
+        try:
+            entry = json.loads(line)
+        except Exception:
+            continue
+        if entry.get("type") != "assistant":
+            continue
+
+        content = (entry.get("message") or {}).get("content")
+        if not isinstance(content, list):
+            continue
+
+        text = ""
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                text += block.get("text", "") + "\n"
+
+        text = re.split(r"(?im)^\s*\**ECC tips?\b", text.strip())[0]
+        if len(text) < 60:
+            continue
+        checked += 1
+
+        cleaned = clean_markdown(text)
+        found = bullets_in(cleaned)
+        if len(found) >= 2:
+            body, points = cleaned, found
+            break
+        if not fallback and len(cleaned) >= 200:
+            fallback = cleaned
+
+    if not points:
+        body = body or fallback
+        if not body:
+            return []
+        # No bullets written — fall back to the opening sentences.
+        flat = " ".join(body.split())
+        points = [s.strip() for s in re.split(r"(?<=[.!?])\s+", flat) if len(s.strip()) > 12]
+
+    trimmed = []
+    for point in points[:max_points]:
+        point = " ".join(point.split())
+        if len(point) > width:
+            point = point[: width - 1].rstrip() + "…"
+        trimmed.append(point)
+    return trimmed
+
+
 def transcript_signals(transcript_path, limit=180):
     """(title, prompt) for a session that has no usable name yet.
 
@@ -133,6 +237,9 @@ session = name if named else (title or folder)
 # Un-named session: say what it was actually working on.
 hint = "" if named else prompt
 
+# What the session actually did — the pet shows as much of this as you ask for.
+points = summary_points(payload.get("transcript_path", "")) if KIND == "done" else []
+
 event = {
     "ts": int(time.time()),
     "kind": KIND,
@@ -140,6 +247,7 @@ event = {
     "session_id": session_id,
     "named": named,
     "hint": hint,
+    "points": points,
     "cwd": cwd,
     "tty": tty_for_pid(meta.get("pid")),
 }

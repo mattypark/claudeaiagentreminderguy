@@ -35,6 +35,8 @@ moment any session stops — named, so you know exactly which terminal to go bac
   the same orange-on-black as Claude Code.
 - **Six personalities.** Direct, Kind, Hype, Chill, Butler, Gremlin — pick the
   tone he announces sessions in, with live examples in the picker.
+- **Summaries on demand.** Ask for three bullet points, or a full recap of what
+  the session finished and what's left for you.
 - **Night and day themes.** Black/orange or white/orange, toggled from the menu,
   remembered across restarts.
 - **Menu bar icon** to hide, mute, or quit. `⌃⌥⌘P` toggles him too.
@@ -81,23 +83,26 @@ you hear it immediately. Your choice sticks across restarts.
 | Voice | When a session finishes |
 |---|---|
 | **Direct** *(default)* | `session is done — go look at it.` |
-| **Kind** | `your session is done — would love for you to take a look 😊` |
-| **Hype** | `IS DONE. GO LOOK 🔥` |
-| **Chill** | `all wrapped up whenever you're ready ✌️` |
+| **Kind** | `your session is done — would love for you to take a look :)` |
+| **Hype** | `IS DONE. GO LOOK :D` |
+| **Chill** | `all wrapped up whenever you're ready :]` |
 | **Butler** | `has concluded its work. At your convenience.` |
-| **Gremlin** | `done. i did the thing 🫡` |
+| **Gremlin** | `done. i did the thing o7` |
 
 Each voice also has its own phrasing for *waiting on you* and *session closed*,
 with a couple of variants apiece so it doesn't repeat the identical sentence
 every time:
 
 ```
-Kind     · idle → "has a question for you when you have a moment 💬"
-Hype     · idle → "NEEDS YOU. RIGHT NOW ⚡"
+Kind     · idle → "has a question for you when you have a moment :)"
+Hype     · idle → "NEEDS YOU. RIGHT NOW >:O"
 Butler   · idle → "awaits your instruction."
-Gremlin  · idle → "is just sitting there. waiting. staring 🫠"
-Chill    · end  → "session closed. later ✌️"
+Gremlin  · idle → "is just sitting there. waiting. staring -_-"
+Chill    · end  → "session closed. later :]"
 ```
+
+Lines use ASCII emoticons (`:)` `:D` `o7`), not emoji — they render cleanly in a
+monospace bubble.
 
 **Write your own** — every line lives in `~/.hammerspoon/claudepet/voices.lua`.
 Copy a block, change the strings, add the key to `Voices.order`, then menu →
@@ -107,11 +112,47 @@ Copy a block, change the strings, add the key to `Voices.order`, then menu →
 pirate = {
   label = "Pirate",
   blurb = "yarr",
-  done = { "be finished, matey ☠️" },
-  idle = { "awaits yer orders 🏴‍☠️" },
-  ["end"] = { "session be closed ⚓" },
+  done = { "be finished, matey" },
+  idle = { "awaits yer orders" },
+  ["end"] = { "session be closed" },
 },
 ```
+
+---
+
+## Bubble detail — see what the session actually did
+
+A name tells you *which* session finished. It doesn't tell you what happened.
+Menu → **Bubble detail** picks how much the card carries:
+
+| Level | Card shows |
+|---|---|
+| **Just the name** *(default)* | `bouncebackwebsite` — `session is done — go look at it.` |
+| **Summary** | the announcement **+ 3 bullet points** on what it did |
+| **Full recap** | the announcement **+ up to 6 bullets** — what it finished, what's left for you |
+
+```
+┌──────────────────────────────────────────────────┐
+│  bouncebackwebsite                               │
+│  your session is done — take a look :)           │
+│                                                  │
+│  •  Rebuilt the hero with the volt accent and    │
+│     the new BrandLogo lockup                     │
+│  •  Wired the shop grid and PDP to real          │
+│     variants, subscribe toggle working           │
+│  •  Left to do: review /shop/12 spacing and      │
+│     confirm the mobile nav                       │
+└──────────────────────────────────────────────────┘
+```
+
+Summary cards widen automatically and grow to fit — long bullets wrap and indent
+under themselves rather than being cut off. Switching levels in the picker fires
+a sample card so you can see the size before committing.
+
+**Where the points come from:** the hook reads the session's last substantive
+assistant message out of the transcript. If Claude wrote bullets, those are the
+bullets. If it wrote prose, the opening sentences are used instead. Markdown
+tables, code fences and the boilerplate tips block are stripped out first.
 
 ---
 
@@ -127,6 +168,8 @@ pirate = {
 | **Get him back** | `⌃⌥⌘P` again, or menu bar icon → **Show pet** |
 | Silence alerts but keep him | menu → **Mute alerts** |
 | Switch black↔white | menu → **Day mode** / **Night mode** |
+| Change his tone | menu → **Personality** |
+| See what a session did | menu → **Bubble detail** → Summary or Full recap |
 | Close him completely | menu → **Quit pet** |
 | **Reopen after quitting** | `open -a Hammerspoon` — or Spotlight (`⌘Space`) → "Hammerspoon" |
 
