@@ -23,7 +23,9 @@ end tell
 --- Focus the tab bound to `tty` (e.g. "/dev/ttys003").
 -- Falls back to just activating Terminal when the tab is gone.
 function Terminal.focus(tty)
-  if not tty or tty == "" then
+  -- The tty is interpolated into an AppleScript string, so only ever accept the
+  -- exact shape ps produces. Anything else could smuggle in script of its own.
+  if not tty or not tty:match("^/dev/tty[a-zA-Z0-9]+$") then
     hs.application.launchOrFocus("Terminal")
     return false
   end

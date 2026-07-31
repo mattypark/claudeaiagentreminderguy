@@ -29,7 +29,7 @@ local SOUNDS = { done = "Hero", idle = "Submarine", ["end"] = "Bottle" }
 local DETAIL_POINTS = { name = nil, summary = 3, full = 6 }
 local DETAIL_ORDER = { "name", "summary", "full" }
 local DETAIL_LABEL = {
-  name    = { label = "Just the name",  blurb = "one line",   example = "bouncebackwebsite · session is done" },
+  name    = { label = "Just the name",  blurb = "one line",   example = "session name · session is done" },
   summary = { label = "Summary",        blurb = "3 points",   example = "+ three bullets on what it did" },
   full    = { label = "Full recap",     blurb = "everything", example = "+ up to six bullets, what's left to do" },
 }
@@ -355,16 +355,16 @@ function M.testSummary()
   handle({
     ts = os.time(),
     kind = "done",
-    session = "bouncebackwebsite",
+    session = "payments-api-refactor",
     session_id = "test-summary-" .. tostring(os.time()),
     cwd = HOME,
     tty = "",
     points = {
-      "Rebuilt the hero with the volt accent and the new BrandLogo lockup",
-      "Wired the shop grid and PDP to real variants, subscribe toggle working",
-      "Footer + waitlist moved above the ink footer, legal row added",
-      "Left to do: review /shop/12 spacing and confirm the mobile nav",
-      "Dev server still running on localhost:3020",
+      "Split the payment handler into charge, refund and webhook modules",
+      "Added retry with backoff around the provider call",
+      "17 tests passing, 2 skipped pending sandbox credentials",
+      "Left to do: decide whether refunds should be idempotent by request id",
+      "Dev server still running on localhost:3000",
       "Nothing committed yet — say the word and I'll push",
     },
   })
@@ -385,9 +385,23 @@ end
 
 -- -------------------------------------------------------------------- start
 
+--- Configure Hammerspoon itself, once, so setup needs no manual clicking and no
+--- scripting bridge left switched on.
+local function applyPreferences()
+  if state.configured then return end
+
+  hs.autoLaunch(true)      -- survive reboots
+  hs.dockIcon(false)       -- he lives in the menu bar
+  hs.menuIcon(true)        -- keep Preferences and the Console reachable
+
+  state.configured = true
+  State.save(state)
+end
+
 local function start()
   state = State.load()
   theme.set(state.theme or "night")
+  applyPreferences()
 
   hs.fs.mkdir(INBOX_DIR)
   -- Skip whatever accumulated while Hammerspoon was closed: only alert live.

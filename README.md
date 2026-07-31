@@ -18,7 +18,8 @@ moment any session stops — named, so you know exactly which terminal to go bac
 **[Manual](#manual--running-him-day-to-day)** ·
 **[Prompt library](#prompt-library)** ·
 **[How it works](#how-it-works)** ·
-**[Troubleshooting](#troubleshooting)**
+**[Troubleshooting](#troubleshooting)** ·
+**[Security](SECURITY.md)**
 
 </div>
 
@@ -47,14 +48,13 @@ Do all of it, don't ask me to run anything myself:
    ~/.claude/hooks/claude-pet.sh, and appends the hook to my ~/.claude/settings.json
    under Stop, SessionEnd and Notification — WITHOUT removing hooks I already have.
    Back that file up first and tell me where the backup went.
-3. Confirm Hammerspoon is running and the pet module loaded:
-   osascript -e 'tell application "Hammerspoon" to execute lua code "return hs.inspect(claudepet.debug())"'
-4. Make sure launch-at-login is on so it survives a reboot:
-   osascript -e 'tell application "Hammerspoon" to execute lua code "hs.autoLaunch(true); hs.dockIcon(false); hs.menuIcon(true); return tostring(hs.autoLaunch())"'
-5. Fire a test bubble so I can see it works:
-   osascript -e 'tell application "Hammerspoon" to execute lua code "claudepet.test(\"install-check\")"'
-6. Verify my existing hooks still run — print the Stop/SessionEnd/Notification
+3. Confirm Hammerspoon is running (pgrep -x Hammerspoon) and that the pet appeared
+   on the right edge of my screen. The pet turns on launch-at-login itself, so
+   don't change any Hammerspoon preferences by hand.
+4. Verify my existing hooks still run — print the Stop/SessionEnd/Notification
    entries from settings.json so I can see mine are intact alongside the new one.
+5. Do NOT enable Hammerspoon's AppleScript bridge. It's off by default on purpose
+   and the install doesn't need it.
 
 Then tell me in a few lines: where the pet is on screen, how to drag him, how to
 open his menu, the hide/show shortcut, and how to reopen him if I quit.
@@ -108,7 +108,7 @@ Nothing there? See [Troubleshooting](#troubleshooting).
 
 Either way, you're done. Next time any session finishes, he tells you which one:
 
-> **axiom-nextjs-platform-rebuild**
+> **payments-api-refactor**
 > session is done — go look at it.
 
 **Click the card** and that session's Terminal tab jumps to the front — or click
@@ -165,7 +165,9 @@ do it.
 - **Night and day themes.** Black/orange or white/orange, toggled from the menu,
   remembered across restarts.
 - **Menu bar icon** to hide, mute, or quit. `⌃⌥⌘P` toggles him too.
-- **Zero macOS permissions.** No Accessibility, no Screen Recording, no network.
+- **Zero macOS permissions and zero network.** No Accessibility, no Screen
+  Recording, no HTTP, no telemetry. Everything stays on your Mac —
+  [details](SECURITY.md).
 
 Three events fire him:
 
@@ -233,7 +235,7 @@ Menu → **Bubble detail** picks how much the card carries:
 
 | Level | Card shows |
 |---|---|
-| **Just the name** *(default)* | `bouncebackwebsite` — `session is done — go look at it.` |
+| **Just the name** *(default)* | `payments-api-refactor` — `session is done — go look at it.` |
 | **Summary** | the announcement **+ 3 bullet points** on what it did |
 | **Full recap** | the announcement **+ up to 6 bullets** — what it finished, what's left for you |
 
@@ -312,8 +314,10 @@ warning showing. Fewer permissions handed out, same behavior.
 
 ### Lost him off-screen?
 
-```bash
-osascript -e 'tell application "Hammerspoon" to execute lua code "hs.settings.clear(\"claudepet.state\"); hs.reload()"'
+Open Hammerspoon's Console (menu bar hammer icon → **Console**) and run:
+
+```lua
+hs.settings.clear("claudepet.state"); hs.reload()
 ```
 
 He returns to the right edge of the main screen.
@@ -342,9 +346,10 @@ Every manual task above, as something you can paste into Claude Code instead.
 Update my Claude session desktop pet.
 
 git pull in the claudeaiagentreminderguy repo (look in ~/Downloads/current-projects,
-otherwise find it), re-run ./install.sh, then reload Hammerspoon with
-osascript -e 'tell application "Hammerspoon" to execute lua code "hs.reload()"'
-and fire a test bubble so I can confirm it still works. Tell me what changed.
+otherwise find it), then re-run ./install.sh. Tell me what changed in the commits
+you pulled. Then tell me to pick "Reload pet" from the pet's menu and "Test bubble"
+to confirm it still works — don't enable Hammerspoon's AppleScript bridge to do it
+for me, it's off by default on purpose.
 ```
 
 </details>
@@ -403,10 +408,10 @@ Check in this order and tell me which one was wrong:
 1. Is the hook writing? tail ~/.claude/pet/inbox.jsonl while a session finishes.
 2. Is the hook wired? Look for claude-pet.sh in ~/.claude/settings.json under
    Stop, SessionEnd and Notification.
-3. Is Hammerspoon running and the module loaded?
-   osascript -e 'tell application "Hammerspoon" to execute lua code "return hs.inspect(claudepet.debug())"'
+3. Is Hammerspoon running? pgrep -x Hammerspoon. Have me open its Console
+   (menu bar hammer icon -> Console) and run: hs.inspect(claudepet.debug())
 4. Is he just hidden or muted? Check the hidden/muted fields in that debug output.
-5. Is he off-screen? hs.settings.clear("claudepet.state") then hs.reload() re-parks him.
+5. Is he off-screen? In the Console: hs.settings.clear("claudepet.state") then hs.reload()
 6. Any Lua errors in the Hammerspoon console?
 
 Fix whatever is broken, then fire a test bubble to prove it works.
@@ -462,7 +467,7 @@ Resolve the session's display name in this priority order:
   1. ~/.claude/sessions/<pid>.json — find the record whose "sessionId" matches
      the payload's session_id, and use its "name". That file is where /rename
      persists, AND where Claude's own auto-generated title lands.
-     If "nameSource" == "derived" the name is a placeholder (like "matthewpark-59")
+     If "nameSource" == "derived" the name is a placeholder (like "yourname-59")
      — treat that as unnamed.
   2. The transcript at payload["transcript_path"] contains "ai-title" and
      "last-prompt" records. Read the tail (last ~200KB, scan backwards) and use
@@ -569,7 +574,7 @@ per session at `~/.claude/sessions/<pid>.json`:
 {
   "pid": 30808,
   "sessionId": "49b91b19-d4ce-4251-8d3f-1a19d4e86909",
-  "cwd": "/Users/matthewpark",
+  "cwd": "/Users/you",
   "name": "desktop-pet-session-notifier",
   "nameSource": "derived",
   "status": "busy"
@@ -614,22 +619,23 @@ tail -f ~/.claude/pet/inbox.jsonl     # is the hook writing?
 Empty → the hook isn't wired. Check `~/.claude/settings.json` for `claude-pet.sh`.
 Writing but no bubble → Hammerspoon isn't running, or the pet is hidden.
 
-**Inspect the pet's live state**
+**Inspect the pet's live state** — open Hammerspoon's Console (menu bar hammer
+icon → **Console**) and run:
 
-```bash
-osascript -e 'tell application "Hammerspoon" to execute lua code "return hs.inspect(claudepet.debug())"'
+```lua
+hs.inspect(claudepet.debug())
 ```
 
-**Fire a test bubble**
+**Fire a test bubble** — menu → **Test bubble**, or in the Console:
 
-```bash
-osascript -e 'tell application "Hammerspoon" to execute lua code "claudepet.test(\"my-session\")"'
+```lua
+claudepet.test("my-session")
 ```
 
-**Lost him off-screen**
+**Lost him off-screen** — in the Console:
 
-```bash
-osascript -e 'tell application "Hammerspoon" to execute lua code "hs.settings.clear(\"claudepet.state\"); hs.reload()"'
+```lua
+hs.settings.clear("claudepet.state"); hs.reload()
 ```
 
 **Errors** — Hammerspoon menu → Console.

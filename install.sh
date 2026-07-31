@@ -97,22 +97,8 @@ PY
 echo "==> Launching Hammerspoon"
 open -a Hammerspoon
 
-echo "==> Setting Hammerspoon preferences"
-# The config enables the AppleScript bridge on load, so wait for it to come up.
-for _ in $(seq 1 15); do
-  if osascript -e 'tell application "Hammerspoon" to execute lua code "return 1"' >/dev/null 2>&1; then
-    osascript -e 'tell application "Hammerspoon" to execute lua code "
-      hs.autoLaunch(true)      -- survive reboots
-      hs.dockIcon(false)       -- lives in the menu bar, not the dock
-      hs.menuIcon(true)        -- keep the hammer icon reachable
-      hs.consoleOnTop(false)
-      return 1
-    "' >/dev/null 2>&1
-    echo "    launch at login: on, dock icon: off"
-    break
-  fi
-  sleep 1
-done
+# The pet sets launch-at-login and the dock/menu icons itself on first run, so
+# nothing here needs Hammerspoon's AppleScript bridge switched on.
 
 cat <<'DONE'
 
@@ -123,6 +109,8 @@ Installed.
   • Menu bar icon (top right) or ⌃⌥⌘P to hide/show.
   • Next time any Claude Code session finishes, he speaks.
 
-Launch-at-login is on, so he comes back after a reboot.
+Launch-at-login was turned on for you, so he comes back after a reboot.
+
 No macOS permissions are required — ignore Hammerspoon's Accessibility warning.
+Nothing here talks to the network, and no scripting bridge is left enabled.
 DONE
