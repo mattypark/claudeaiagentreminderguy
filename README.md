@@ -33,6 +33,8 @@ moment any session stops — named, so you know exactly which terminal to go bac
 - **Drag him anywhere.** Position is remembered across reboots.
 - **Drawn menu, not Apple chrome.** Click the sprite for a terminal-styled menu in
   the same orange-on-black as Claude Code.
+- **Six personalities.** Direct, Kind, Hype, Chill, Butler, Gremlin — pick the
+  tone he announces sessions in, with live examples in the picker.
 - **Night and day themes.** Black/orange or white/orange, toggled from the menu,
   remembered across restarts.
 - **Menu bar icon** to hide, mute, or quit. `⌃⌥⌘P` toggles him too.
@@ -67,6 +69,49 @@ at login**, or the pet won't survive a reboot. See
 
 To reskin him, drop any PNG at `~/.hammerspoon/claudepet/assets/pet.png` and pick
 **Reload pet** from the menu bar.
+
+---
+
+## Personalities
+
+Same event, different voice. Pick one from the menu → **Personality** — the picker
+shows a live example under every option, and switching fires a sample bubble so
+you hear it immediately. Your choice sticks across restarts.
+
+| Voice | When a session finishes |
+|---|---|
+| **Direct** *(default)* | `session is done — go look at it.` |
+| **Kind** | `your session is done — would love for you to take a look 😊` |
+| **Hype** | `IS DONE. GO LOOK 🔥` |
+| **Chill** | `all wrapped up whenever you're ready ✌️` |
+| **Butler** | `has concluded its work. At your convenience.` |
+| **Gremlin** | `done. i did the thing 🫡` |
+
+Each voice also has its own phrasing for *waiting on you* and *session closed*,
+with a couple of variants apiece so it doesn't repeat the identical sentence
+every time:
+
+```
+Kind     · idle → "has a question for you when you have a moment 💬"
+Hype     · idle → "NEEDS YOU. RIGHT NOW ⚡"
+Butler   · idle → "awaits your instruction."
+Gremlin  · idle → "is just sitting there. waiting. staring 🫠"
+Chill    · end  → "session closed. later ✌️"
+```
+
+**Write your own** — every line lives in `~/.hammerspoon/claudepet/voices.lua`.
+Copy a block, change the strings, add the key to `Voices.order`, then menu →
+**Reload pet**. It shows up in the picker with your example text.
+
+```lua
+pirate = {
+  label = "Pirate",
+  blurb = "yarr",
+  done = { "be finished, matey ☠️" },
+  idle = { "awaits yer orders 🏴‍☠️" },
+  ["end"] = { "session be closed ⚓" },
+},
+```
 
 ---
 
@@ -212,9 +257,18 @@ Split into modules: init.lua (wiring), pet.lua (sprite), bubble.lua, terminal.lu
   - Dedupe repeat alerts for the same session within 5s.
   - On inbox truncation resume at the new file size — never re-read from 0, or
     you get a burst of alerts for stale sessions.
-  - hs.menubar item with the sprite as its icon: show/hide, mute, recent sessions
-    (click one to focus its terminal), test bubble, reload, quit. Same menu pops
-    at the cursor when the sprite itself is clicked. Bind ⌃⌥⌘P to toggle.
+  - Menu rows live in one table shared by both menus. Support "pages": a row with
+    a submenu swaps the panel contents in place, with a "← Back" row. Use that for
+    Recent sessions and for Personality — a flat list of everything is unreadable.
+  - PERSONALITIES: a voices module holding several tones (direct, kind, hype,
+    chill, butler, gremlin), each with 2-3 phrasing variants for done/idle/end,
+    picked at random so it doesn't repeat itself. The picker shows a live example
+    line under each option and fires a sample bubble when you switch. Persist the
+    choice. Keep the sound per event kind, not per voice.
+  - hs.menubar item with the sprite as its icon: show/hide, mute, personality,
+    theme, recent sessions (click one to focus its terminal), test bubble, reload,
+    quit. Same menu pops at the cursor when the sprite itself is clicked. Bind
+    ⌃⌥⌘P to toggle.
   - When hidden, alerts play sound only — no visuals.
   - Don't put an hs.alert on config load; it fires on every reload and is noise.
 
@@ -297,6 +351,7 @@ hammerspoon/
     pet.lua                 # sprite canvas, bob, permission-free drag
     bubble.lua              # speech bubble canvas
     terminal.lua            # AppleScript tab focus by tty
+    voices.lua              # the personalities — edit or add your own
     theme.lua               # colors, sizes, timings
     state.lua               # hs.settings persistence
     assets/pet.png          # swap this to reskin

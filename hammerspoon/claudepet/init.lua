@@ -9,6 +9,7 @@ local Pet      = require("claudepet.pet")
 local Stack    = require("claudepet.stack")
 local Menu     = require("claudepet.menu")
 local Terminal = require("claudepet.terminal")
+local Voices   = require("claudepet.voices")
 local theme    = require("claudepet.theme")
 
 local M = {}
@@ -21,11 +22,8 @@ local DEDUPE_WINDOW = 5   -- seconds; ignore a repeat alert for the same session
 local RECENT_MAX = 8
 local HOTKEY = { { "ctrl", "alt", "cmd" }, "p" }
 
-local COPY = {
-  done    = { sound = "Hero",      body = "session is done — go look at it." },
-  idle    = { sound = "Submarine", body = "is waiting on you." },
-  ["end"] = { sound = "Bottle",    body = "session closed." },
-}
+-- Wording comes from the chosen personality; only the sound is fixed per event.
+local SOUNDS = { done = "Hero", idle = "Submarine", ["end"] = "Bottle" }
 
 local state, pet, stack, menu, menubar, watcher, hotkey
 local offset = 0
@@ -71,7 +69,7 @@ end
 
 local function play(kind)
   if state.muted then return end
-  local sound = hs.sound.getByName((COPY[kind] or COPY.done).sound)
+  local sound = hs.sound.getByName(SOUNDS[kind] or SOUNDS.done)
   if sound then sound:play() end
 end
 
@@ -108,8 +106,7 @@ local function alert(event)
   pet:nudge()
   stack:setAnchor(pet:frame())
 
-  local copy = COPY[event.kind] or COPY.done
-  local body = copy.body
+  local body = Voices.line(state.voice, event.kind)
   if event.hint and event.hint ~= "" then
     body = body .. "\n“" .. event.hint .. "”"
   end
@@ -150,6 +147,31 @@ local function recentPage()
   return rows
 end
 
+--- The "Personality" page: every voice, each showing what it actually says.
+local function personalityPage()
+  local rows = { { kind = "header", title = "PERSONALITY" } }
+
+  for _, key in ipairs(Voices.order) do
+    local voice = Voices.get(key)
+    local active = (state.voice == key)
+
+    rows[#rows + 1] = {
+      title = (active and "● " or "   ") .. voice.label,
+      hint = active and "on" or voice.blurb,
+      preview = "“" .. Voices.example(key, "done") .. "”",
+      fn = function()
+        state.voice = key
+        State.save(state)
+        M.test("preview")          -- show the new voice immediately
+      end,
+    }
+  end
+
+  rows[#rows + 1] = { kind = "sep" }
+  rows[#rows + 1] = { title = "← Back", submenu = function() return actions() end }
+  return rows
+end
+
 --- The rows shared by the sprite menu and the menu bar item.
 function actions()
   local rows = {}
@@ -174,6 +196,11 @@ function actions()
       state.muted = not state.muted
       State.save(state)
     end,
+  }
+  rows[#rows + 1] = {
+    title = "Personality",
+    hint = "▸ " .. Voices.get(state.voice).label,
+    submenu = personalityPage,
   }
   rows[#rows + 1] = {
     title = theme.mode == "night" and "Day mode" or "Night mode",
@@ -264,6 +291,7 @@ function M.debug()
     hidden = pet:isHidden(),
     muted = state.muted,
     theme = theme.mode,
+    voice = state.voice,
     offset = offset,
     position = { x = pet.baseX, y = pet.baseY },
     cards = #stack.cards,

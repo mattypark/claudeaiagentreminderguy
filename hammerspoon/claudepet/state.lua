@@ -8,6 +8,7 @@ local defaults = {
   hidden = false,
   muted = false,
   theme = "night",
+  voice = "direct",
 }
 
 local State = {}
@@ -29,6 +30,7 @@ function State.save(state)
     hidden = state.hidden,
     muted = state.muted,
     theme = state.theme,
+    voice = state.voice,
   })
 end
 

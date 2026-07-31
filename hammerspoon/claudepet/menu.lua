@@ -35,6 +35,7 @@ end
 local function rowHeight(row)
   if row.kind == "sep" then return 9 end
   if row.kind == "header" then return 22 end
+  if row.preview then return theme.menuRow + 18 end   -- title + example line
   return theme.menuRow
 end
 
@@ -98,7 +99,16 @@ function Menu:render()
         canvas:appendElements({
           type = "text",
           text = styled(row.hint, theme.smallSize, palette.dim, "right"),
-          frame = { x = w - theme.menuPad - HINT_W, y = y + 9, w = HINT_W, h = h - 10 },
+          frame = { x = w - theme.menuPad - HINT_W, y = y + 9, w = HINT_W, h = 18 },
+        })
+      end
+
+      -- Example of what this option actually sounds like.
+      if row.preview then
+        canvas:appendElements({
+          type = "text",
+          text = styled(row.preview, theme.smallSize, palette.dim),
+          frame = { x = TITLE_X + 2, y = y + 26, w = w - TITLE_X - theme.menuPad - 2, h = 18 },
         })
       end
     end
