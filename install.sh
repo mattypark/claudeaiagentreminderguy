@@ -97,13 +97,32 @@ PY
 echo "==> Launching Hammerspoon"
 open -a Hammerspoon
 
+echo "==> Setting Hammerspoon preferences"
+# The config enables the AppleScript bridge on load, so wait for it to come up.
+for _ in $(seq 1 15); do
+  if osascript -e 'tell application "Hammerspoon" to execute lua code "return 1"' >/dev/null 2>&1; then
+    osascript -e 'tell application "Hammerspoon" to execute lua code "
+      hs.autoLaunch(true)      -- survive reboots
+      hs.dockIcon(false)       -- lives in the menu bar, not the dock
+      hs.menuIcon(true)        -- keep the hammer icon reachable
+      hs.consoleOnTop(false)
+      return 1
+    "' >/dev/null 2>&1
+    echo "    launch at login: on, dock icon: off"
+    break
+  fi
+  sleep 1
+done
+
 cat <<'DONE'
 
 Installed.
 
   • The pet is on the right edge of your screen — drag it anywhere.
+  • Click him for the menu: personality, bubble detail, themes, hide, quit.
   • Menu bar icon (top right) or ⌃⌥⌘P to hide/show.
-  • Next time any Claude Code session finishes, it speaks.
+  • Next time any Claude Code session finishes, he speaks.
 
-No macOS permissions are required.
+Launch-at-login is on, so he comes back after a reboot.
+No macOS permissions are required — ignore Hammerspoon's Accessibility warning.
 DONE

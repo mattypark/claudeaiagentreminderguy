@@ -10,12 +10,13 @@ Run 10+ Claude Code sessions at once? You lose track of which one is done.
 This puts a draggable pixel Claude on your desktop who pops a speech bubble the
 moment any session stops — named, so you know exactly which terminal to go back to.
 
-**[Setup](#setup--5-steps)** ·
+**[Setup](#setup)** ·
 **[Making it yours](#making-it-yours)** ·
 **[What it does](#what-it-actually-does)** ·
 **[Personalities](#personalities)** ·
 **[Summaries](#bubble-detail--see-what-the-session-actually-did)** ·
 **[Manual](#manual--running-him-day-to-day)** ·
+**[Prompt library](#prompt-library)** ·
 **[How it works](#how-it-works)** ·
 **[Troubleshooting](#troubleshooting)**
 
@@ -25,54 +26,93 @@ moment any session stops — named, so you know exactly which terminal to go bac
 
 ---
 
-# Setup — 5 steps
+# Setup
 
-Ten minutes, most of it waiting on Homebrew. macOS only.
+macOS only. Two ways in — **paste one prompt**, or do it by hand.
 
-### 1. Get the code
+## Option 1 — paste this into Claude Code
+
+Open Claude Code anywhere and paste this. It does everything: installs, wires the
+hook, sets the preferences, and shows you a test bubble.
+
+```text
+Install the Claude session desktop pet from https://github.com/mattypark/claudeaiagentreminderguy
+
+Do all of it, don't ask me to run anything myself:
+
+1. Clone the repo into ~/Downloads/current-projects (create the folder if needed).
+   If it's already cloned there, git pull instead.
+2. Run ./install.sh and show me any errors. It installs Hammerspoon via Homebrew
+   if missing, copies the pet to ~/.hammerspoon/claudepet/, copies the hook to
+   ~/.claude/hooks/claude-pet.sh, and appends the hook to my ~/.claude/settings.json
+   under Stop, SessionEnd and Notification — WITHOUT removing hooks I already have.
+   Back that file up first and tell me where the backup went.
+3. Confirm Hammerspoon is running and the pet module loaded:
+   osascript -e 'tell application "Hammerspoon" to execute lua code "return hs.inspect(claudepet.debug())"'
+4. Make sure launch-at-login is on so it survives a reboot:
+   osascript -e 'tell application "Hammerspoon" to execute lua code "hs.autoLaunch(true); hs.dockIcon(false); hs.menuIcon(true); return tostring(hs.autoLaunch())"'
+5. Fire a test bubble so I can see it works:
+   osascript -e 'tell application "Hammerspoon" to execute lua code "claudepet.test(\"install-check\")"'
+6. Verify my existing hooks still run — print the Stop/SessionEnd/Notification
+   entries from settings.json so I can see mine are intact alongside the new one.
+
+Then tell me in a few lines: where the pet is on screen, how to drag him, how to
+open his menu, the hide/show shortcut, and how to reopen him if I quit.
+I do NOT need to grant Accessibility — say so if Hammerspoon warns about it.
+```
+
+**That's the whole setup.** Skip to [Making it yours](#making-it-yours).
+
+<details>
+<summary><b>Option 2 — do it by hand (5 steps)</b></summary>
+
+<br>
+
+**1. Get the code**
 
 ```bash
 git clone https://github.com/mattypark/claudeaiagentreminderguy.git
 cd claudeaiagentreminderguy
 ```
 
-### 2. Run the installer
+**2. Run the installer**
 
 ```bash
 ./install.sh
 ```
 
 It installs Hammerspoon if you don't have it, copies the pet into
-`~/.hammerspoon/`, copies the hook into `~/.claude/hooks/`, and wires the hook
-into `~/.claude/settings.json`. Your existing hooks are left alone — the file is
-backed up first.
+`~/.hammerspoon/`, copies the hook into `~/.claude/hooks/`, wires the hook into
+`~/.claude/settings.json`, and turns on launch-at-login. Your existing hooks are
+left alone — the file is backed up first.
 
-### 3. Turn on "Launch at login"
+**3. Check the preferences took**
 
-Click the **hammer icon** 🔨 in your menu bar → **Preferences** → check
-**Launch Hammerspoon at login**.
-
-Skip this and the pet disappears on your next reboot. It's the only setting that
-really matters — [the rest are here](#hammerspoon-preferences--set-these-once).
+The installer sets these for you. To confirm: hammer icon 🔨 in the menu bar →
+**Preferences** → **Launch Hammerspoon at login** should be checked.
+[Full list](#hammerspoon-preferences--set-these-once).
 
 > **Ignore the red "Accessibility is not enabled!" warning.** This project needs
 > zero macOS permissions. [Why](#about-that-red-accessibility-warning).
 
-### 4. Check that he's alive
+**4. Check that he's alive**
 
-The pixel guy should be sitting on the right edge of your screen. Click him — a
-menu opens. Pick **Test bubble** and a card pops out.
+The pixel guy should be on the right edge of your screen. Click him — a menu
+opens. Pick **Test bubble** and a card pops out.
 
-Nothing there? Jump to [Troubleshooting](#troubleshooting).
+Nothing there? See [Troubleshooting](#troubleshooting).
 
-### 5. Use Claude Code normally
+**5. Use Claude Code normally**
 
-That's it. Next time any session finishes, he tells you which one:
+</details>
+
+Either way, you're done. Next time any session finishes, he tells you which one:
 
 > **axiom-nextjs-platform-rebuild**
 > session is done — go look at it.
 
-**Click the card** and that session's Terminal tab jumps to the front.
+**Click the card** and that session's Terminal tab jumps to the front. Sessions
+already running when you install pick the hook up automatically — no restart.
 
 ---
 
@@ -98,7 +138,9 @@ bar, top right.
 **Move him:** click and hold, drag anywhere. He stays there across reboots.
 
 **Deeper changes** — a different sprite, new colors, your own personality, other
-sounds — are all single-file edits: [Make him yours](#make-him-yours).
+sounds — are single-file edits ([Make him yours](#make-him-yours)), or paste one
+of the ready-made prompts in the [Prompt library](#prompt-library) and let Claude
+do it.
 
 ---
 
@@ -284,13 +326,115 @@ He returns to the right edge of the main screen.
 
 ---
 
+# Prompt library
+
+Every manual task above, as something you can paste into Claude Code instead.
+
+<details>
+<summary><b>Update to the latest version</b></summary>
+
+```text
+Update my Claude session desktop pet.
+
+git pull in the claudeaiagentreminderguy repo (look in ~/Downloads/current-projects,
+otherwise find it), re-run ./install.sh, then reload Hammerspoon with
+osascript -e 'tell application "Hammerspoon" to execute lua code "hs.reload()"'
+and fire a test bubble so I can confirm it still works. Tell me what changed.
+```
+
+</details>
+
+<details>
+<summary><b>Use my own sprite image</b></summary>
+
+```text
+Reskin my Claude desktop pet with this image: <DRAG YOUR IMAGE IN, or give the path>
+
+If the background isn't transparent, flood-fill it from the edges to transparent
+with PIL, crop to the bounding box, and downscale to about 320px wide — an opaque
+rectangle looks broken floating on the desktop. Save it to
+~/.hammerspoon/claudepet/assets/pet.png, keep the old one as pet-original.png,
+then reload Hammerspoon and fire a test bubble so I can see it.
+```
+
+</details>
+
+<details>
+<summary><b>Add my own personality</b></summary>
+
+```text
+Add a new personality to my Claude desktop pet called "<NAME>".
+It should sound like: <DESCRIBE THE TONE>
+
+Edit ~/.hammerspoon/claudepet/voices.lua: add a block with label, blurb, and 2-3
+phrasing variants each for done / idle / end, then add the key to Voices.order.
+Use ASCII emoticons like :) and o7, never unicode emoji. Reload Hammerspoon and
+fire a test bubble in the new voice so I can hear it.
+```
+
+</details>
+
+<details>
+<summary><b>Change the colors, sizes or timings</b></summary>
+
+```text
+Tune my Claude desktop pet: <WHAT YOU WANT — e.g. "cards should stay up 20 seconds",
+"make the bubbles wider", "warmer orange", "bigger sprite">
+
+Everything is in ~/.hammerspoon/claudepet/theme.lua — both palettes, bubble widths,
+bubbleHold, font sizes, menu metrics. Make the change, reload Hammerspoon, and fire
+a test bubble so I can see the result. Show me what you changed.
+```
+
+</details>
+
+<details>
+<summary><b>It stopped working — fix it</b></summary>
+
+```text
+My Claude session desktop pet stopped alerting me. Diagnose and fix it.
+
+Check in this order and tell me which one was wrong:
+1. Is the hook writing? tail ~/.claude/pet/inbox.jsonl while a session finishes.
+2. Is the hook wired? Look for claude-pet.sh in ~/.claude/settings.json under
+   Stop, SessionEnd and Notification.
+3. Is Hammerspoon running and the module loaded?
+   osascript -e 'tell application "Hammerspoon" to execute lua code "return hs.inspect(claudepet.debug())"'
+4. Is he just hidden or muted? Check the hidden/muted fields in that debug output.
+5. Is he off-screen? hs.settings.clear("claudepet.state") then hs.reload() re-parks him.
+6. Any Lua errors in the Hammerspoon console?
+
+Fix whatever is broken, then fire a test bubble to prove it works.
+```
+
+</details>
+
+<details>
+<summary><b>Remove it completely</b></summary>
+
+```text
+Uninstall the Claude session desktop pet.
+
+Remove ~/.hammerspoon/claudepet/, remove the claudepet require line from
+~/.hammerspoon/init.lua, delete ~/.claude/hooks/claude-pet.sh and
+~/.claude/pet/, and strip the claude-pet.sh entries out of ~/.claude/settings.json
+under Stop, SessionEnd and Notification — leaving every other hook exactly as it is.
+Back settings.json up first. Then quit Hammerspoon.
+
+Don't uninstall Hammerspoon itself unless I say so — ask me first.
+```
+
+</details>
+
+---
+
 # Build it yourself with one prompt
 
 Don't want to clone? Paste this into Claude Code and it builds the whole thing
 from scratch, on any Mac:
 
-<details open>
-<summary><b>📋 The prompt</b></summary>
+<details>
+<summary><b>📋 Click to expand the prompt</b></summary>
 
 ````text
 Build me a macOS desktop pet that tells me when my Claude Code sessions finish.
