@@ -638,7 +638,11 @@ claudepet.test("my-session")
 hs.settings.clear("claudepet.state"); hs.reload()
 ```
 
-**Errors** — Hammerspoon menu → Console.
+**Errors** — Hammerspoon menu bar icon → **Console**.
+
+**Turning off the scripting bridge** — if you ever ran `hs.allowAppleScript(true)`,
+the setting persists even after you remove the line. Close it in the Console with
+`hs.allowAppleScript(false)`. See [SECURITY.md](SECURITY.md).
 
 ---
 

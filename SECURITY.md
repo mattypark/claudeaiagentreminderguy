@@ -45,8 +45,21 @@ It's genuinely useful for debugging, so the line ships in `init.lua`
 Hammerspoon's own **Console** (menu bar hammer icon → Console) runs the same
 commands without exposing that surface. Use it in preference to the bridge.
 
-If you do enable it, understand what you're accepting, and consider turning it
-back off when you're done debugging.
+If you do enable it, understand what you're accepting, and turn it back off when
+you're done debugging.
+
+> **Important:** the setting is persisted by Hammerspoon, not by this config.
+> Deleting or re-commenting the line does **not** switch it off — the preference
+> survives. To actually close it, run this once in Hammerspoon's Console:
+>
+> ```lua
+> hs.allowAppleScript(false)
+> ```
+>
+> To check the current state: `hs.allowAppleScript()` returns true or false.
+
+If you followed an older version of this README that used `osascript` commands,
+you enabled it. Run the line above.
 
 ## Credential redaction
 
