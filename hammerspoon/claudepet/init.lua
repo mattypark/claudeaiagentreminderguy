@@ -79,12 +79,29 @@ local function focusEvent(event)
   Terminal.focus(event.tty)
 end
 
---- One card per event — they stack, they never merge, text is never clipped.
-local function alert(event)
-  play(event.kind)
+local function eventKey(event)
+  return (event.session_id ~= "" and event.session_id) or event.session
+end
+
+--- History holds one row per session: a repeat moves it back to the top with a
+--- fresh timestamp rather than adding a second entry for the same session.
+local function remember(event)
+  local key = eventKey(event)
+  for index, existing in ipairs(recent) do
+    if eventKey(existing) == key then
+      table.remove(recent, index)
+      break
+    end
+  end
 
   table.insert(recent, 1, event)
   while #recent > RECENT_MAX do table.remove(recent) end
+end
+
+--- One card per event — they stack, they never merge, text is never clipped.
+local function alert(event)
+  play(event.kind)
+  remember(event)
 
   if pet:isHidden() then return end   -- hidden means hidden: sound only
 
@@ -101,7 +118,7 @@ local function alert(event)
 end
 
 local function handle(event)
-  local key = (event.session_id ~= "" and event.session_id) or event.session
+  local key = eventKey(event)
   local now = os.time()
   if lastAlert[key] and (now - lastAlert[key]) < DEDUPE_WINDOW then return end
   lastAlert[key] = now
@@ -256,11 +273,12 @@ end
 
 --- Fire a fake alert — useful for checking placement after moving the pet.
 function M.test(name)
+  name = name or "test-session"
   handle({
     ts = os.time(),
     kind = "done",
-    session = name or "test-session",
-    session_id = "test-" .. tostring(math.floor(hs.timer.absoluteTime() / 1e6)),
+    session = name,
+    session_id = "test-" .. name,   -- stable, so repeats collapse like real ones
     cwd = HOME,
     tty = "",
   })
