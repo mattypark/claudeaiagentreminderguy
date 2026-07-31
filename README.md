@@ -61,6 +61,10 @@ That installs Hammerspoon if missing, copies the pet and the hook, and wires
 the file up first). Sessions already running pick the hook up automatically —
 no restart needed.
 
+**Then set Hammerspoon's preferences once** — in particular **Launch Hammerspoon
+at login**, or the pet won't survive a reboot. See
+[Hammerspoon Preferences](#hammerspoon-preferences--set-these-once) below.
+
 To reskin him, drop any PNG at `~/.hammerspoon/claudepet/assets/pet.png` and pick
 **Reload pet** from the menu bar.
 
@@ -92,9 +96,35 @@ To reskin him, drop any PNG at `~/.hammerspoon/claudepet/assets/pet.png` and pic
 The **menu bar icon is your safety net** — it's there whenever Hammerspoon is
 running, even when the sprite is hidden or dragged off somewhere odd.
 
-### Start him automatically at login
+### Hammerspoon Preferences — set these once
 
-Hammerspoon menu bar icon → **Preferences** → check **Launch Hammerspoon at login**.
+Hammerspoon menu bar icon (the hammer 🔨) → **Preferences**. Match this:
+
+<img src="docs/hammerspoon-preferences.png" width="620" alt="Hammerspoon preferences: launch at login on, dock icon off, menu icon on, Accessibility left disabled">
+
+| Setting | Set to | Why |
+|---|---|---|
+| **Launch Hammerspoon at login** | **ON** | Without it the pet is gone after every reboot and you have to reopen him by hand. **This is the one that matters.** |
+| Check for updates | ON | Hammerspoon updating itself. Leave *"automatically download and install"* unchecked so you approve installs. |
+| Show dock icon | OFF | He lives in the menu bar, not the dock. |
+| Show menu icon | ON | The hammer icon is how you reach Preferences and the Console when something misbehaves. |
+| Keep Console window on top | OFF | Only useful while debugging. |
+| Send crash data | your call | No effect on the pet. |
+
+#### About that red Accessibility warning
+
+Hammerspoon shows **"WARNING! Accessibility is not enabled!"** with a red dot.
+**Leave it off — this project does not need it.**
+
+That warning is generic to Hammerspoon, not to this pet. The usual reason a
+Hammerspoon script needs Accessibility is `hs.eventtap`, which fails outright
+without it (`Unable to create eventtap`). Dragging here is done by polling
+`hs.mouse.absolutePosition()` and `hs.eventtap.checkMouseButtons()` on a timer —
+neither requires permission. The global hotkey uses Carbon hotkey registration,
+which doesn't either.
+
+So: drag, `⌃⌥⌘P`, menus, bubbles, sounds and terminal focus all work with the
+warning showing. Fewer permissions handed out, same behavior.
 
 ### Lost him off-screen?
 
