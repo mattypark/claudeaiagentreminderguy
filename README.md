@@ -10,19 +10,99 @@ Run 10+ Claude Code sessions at once? You lose track of which one is done.
 This puts a draggable pixel Claude on your desktop who pops a speech bubble the
 moment any session stops — named, so you know exactly which terminal to go back to.
 
+**[Setup](#setup--5-steps)** ·
+**[Making it yours](#making-it-yours)** ·
+**[What it does](#what-it-actually-does)** ·
+**[Personalities](#personalities)** ·
+**[Summaries](#bubble-detail--see-what-the-session-actually-did)** ·
+**[Manual](#manual--running-him-day-to-day)** ·
+**[How it works](#how-it-works)** ·
+**[Troubleshooting](#troubleshooting)**
+
 </div>
+
+<img src="docs/bubble.png" alt="A speech bubble beside the pet showing a session name and three summary bullets">
 
 ---
 
-## What it does
+# Setup — 5 steps
 
+Ten minutes, most of it waiting on Homebrew. macOS only.
+
+### 1. Get the code
+
+```bash
+git clone https://github.com/mattypark/claudeaiagentreminderguy.git
+cd claudeaiagentreminderguy
 ```
-   ┌────────────────────────────────┐
-   │  axiom-nextjs-platform-rebuild │   ▄▄▄▄▄▄▄▄▄
-   │  session is done — go look     │   █ ▄   ▄ █
-   │  at it.                        │   █       █
-   └────────────────────────────────┘   █ █ █ █ █
+
+### 2. Run the installer
+
+```bash
+./install.sh
 ```
+
+It installs Hammerspoon if you don't have it, copies the pet into
+`~/.hammerspoon/`, copies the hook into `~/.claude/hooks/`, and wires the hook
+into `~/.claude/settings.json`. Your existing hooks are left alone — the file is
+backed up first.
+
+### 3. Turn on "Launch at login"
+
+Click the **hammer icon** 🔨 in your menu bar → **Preferences** → check
+**Launch Hammerspoon at login**.
+
+Skip this and the pet disappears on your next reboot. It's the only setting that
+really matters — [the rest are here](#hammerspoon-preferences--set-these-once).
+
+> **Ignore the red "Accessibility is not enabled!" warning.** This project needs
+> zero macOS permissions. [Why](#about-that-red-accessibility-warning).
+
+### 4. Check that he's alive
+
+The pixel guy should be sitting on the right edge of your screen. Click him — a
+menu opens. Pick **Test bubble** and a card pops out.
+
+Nothing there? Jump to [Troubleshooting](#troubleshooting).
+
+### 5. Use Claude Code normally
+
+That's it. Next time any session finishes, he tells you which one:
+
+> **axiom-nextjs-platform-rebuild**
+> session is done — go look at it.
+
+**Click the card** and that session's Terminal tab jumps to the front.
+
+---
+
+# Making it yours
+
+Everything is behind one menu. **Click the pet** — or the pet icon in your menu
+bar, top right.
+
+<img src="docs/menu.png" alt="The pet's drawn menu: recent sessions, hide pet, mute alerts, personality, bubble detail, day mode, test bubble, reload, quit">
+
+| Menu item | What it does |
+|---|---|
+| **Recent sessions** | Last 8 sessions that finished. Click one to jump to its terminal. |
+| **Hide pet** | Sprite disappears, alerts still play. `⌃⌥⌘P` does the same. |
+| **Mute alerts** | Cards still appear, no sound. |
+| **Personality** | How he talks — Direct, Kind, Hype, Chill, Butler, Gremlin. [Details](#personalities) |
+| **Bubble detail** | Name only, 3 summary points, or a full recap. [Details](#bubble-detail--see-what-the-session-actually-did) |
+| **Day mode / Night mode** | White-and-orange or black-and-orange. |
+| **Test bubble** | Fires a sample card. |
+| **Reload pet** | Picks up changes you made to the files. |
+| **Quit pet** | Shuts him down completely. Reopen with `open -a Hammerspoon`. |
+
+**Move him:** click and hold, drag anywhere. He stays there across reboots.
+
+**Deeper changes** — a different sprite, new colors, your own personality, other
+sounds — are all single-file edits: [Make him yours](#make-him-yours).
+
+---
+
+# What it actually does
 
 - **Names every session correctly.** Uses your `/rename` title. Didn't rename it?
   It uses the title Claude auto-generated, then falls back to the project folder,
@@ -50,31 +130,12 @@ Three events fire him:
 | Claude is waiting on you | *"NAME is waiting on you."* |
 | Session closed | *"NAME session closed."* |
 
----
-
-## Install
-
-```bash
-git clone https://github.com/mattypark/claudeaiagentreminderguy.git
-cd claudeaiagentreminderguy
-./install.sh
-```
-
-That installs Hammerspoon if missing, copies the pet and the hook, and wires
-`~/.claude/settings.json` **without touching hooks you already have** (it backs
-the file up first). Sessions already running pick the hook up automatically —
-no restart needed.
-
-**Then set Hammerspoon's preferences once** — in particular **Launch Hammerspoon
-at login**, or the pet won't survive a reboot. See
-[Hammerspoon Preferences](#hammerspoon-preferences--set-these-once) below.
-
-To reskin him, drop any PNG at `~/.hammerspoon/claudepet/assets/pet.png` and pick
-**Reload pet** from the menu bar.
+Sessions already running when you install pick the hook up automatically — no
+restart needed.
 
 ---
 
-## Personalities
+# Personalities
 
 Same event, different voice. Pick one from the menu → **Personality** — the picker
 shows a live example under every option, and switching fires a sample bubble so
@@ -120,7 +181,7 @@ pirate = {
 
 ---
 
-## Bubble detail — see what the session actually did
+# Bubble detail — see what the session actually did
 
 A name tells you *which* session finished. It doesn't tell you what happened.
 Menu → **Bubble detail** picks how much the card carries:
@@ -131,19 +192,7 @@ Menu → **Bubble detail** picks how much the card carries:
 | **Summary** | the announcement **+ 3 bullet points** on what it did |
 | **Full recap** | the announcement **+ up to 6 bullets** — what it finished, what's left for you |
 
-```
-┌──────────────────────────────────────────────────┐
-│  bouncebackwebsite                               │
-│  your session is done — take a look :)           │
-│                                                  │
-│  •  Rebuilt the hero with the volt accent and    │
-│     the new BrandLogo lockup                     │
-│  •  Wired the shop grid and PDP to real          │
-│     variants, subscribe toggle working           │
-│  •  Left to do: review /shop/12 spacing and      │
-│     confirm the mobile nav                       │
-└──────────────────────────────────────────────────┘
-```
+<img src="docs/bubble.png" alt="Summary card with three bullets beside the pet">
 
 Summary cards widen automatically and grow to fit — long bullets wrap and indent
 under themselves rather than being cut off. Switching levels in the picker fires
@@ -156,7 +205,7 @@ tables, code fences and the boilerplate tips block are stripped out first.
 
 ---
 
-## Manual — running him day to day
+# Manual — running him day to day
 
 ### Where the controls are
 
@@ -235,7 +284,7 @@ He returns to the right edge of the main screen.
 
 ---
 
-## Build it yourself with one prompt
+# Build it yourself with one prompt
 
 Don't want to clone? Paste this into Claude Code and it builds the whole thing
 from scratch, on any Mac:
@@ -335,7 +384,7 @@ hide/show survives a reload, and confirm my pre-existing hooks still run.
 
 ---
 
-## How it works
+# How it works
 
 ```
 Claude Code session ends
@@ -384,7 +433,7 @@ Terminal tty for free.
 
 ---
 
-## Layout
+# Layout
 
 ```
 hammerspoon/
@@ -405,7 +454,7 @@ install.sh
 
 ---
 
-## Troubleshooting
+# Troubleshooting
 
 **Nothing happens when a session ends**
 
