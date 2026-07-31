@@ -111,8 +111,10 @@ Either way, you're done. Next time any session finishes, he tells you which one:
 > **axiom-nextjs-platform-rebuild**
 > session is done — go look at it.
 
-**Click the card** and that session's Terminal tab jumps to the front. Sessions
-already running when you install pick the hook up automatically — no restart.
+**Click the card** and that session's Terminal tab jumps to the front — or click
+the small **✕** in its corner to dismiss it without going anywhere. Cards also
+fade on their own after a few seconds. Sessions already running when you install
+pick the hook up automatically — no restart.
 
 ---
 
@@ -152,6 +154,7 @@ do it.
 - **One card per session — they stack, never merge.** Four finish at once and you
   get four cards riding up the screen, each with its full untruncated text.
 - **Click a card** → the exact Terminal tab that ran that session comes forward.
+  Or hit the small **✕** in its top-left corner to just dismiss it.
 - **Drag him anywhere.** Position is remembered across reboots.
 - **Drawn menu, not Apple chrome.** Click the sprite for a terminal-styled menu in
   the same orange-on-black as Claude Code.
@@ -236,8 +239,10 @@ Menu → **Bubble detail** picks how much the card carries:
 
 <img src="docs/bubble.png" alt="Summary card with three bullets beside the pet">
 
-Summary cards widen automatically and grow to fit — long bullets wrap and indent
-under themselves rather than being cut off. Switching levels in the picker fires
+Every card carries a small **✕** in its top-left corner: click it to dismiss that
+card alone, click anywhere else on the card to jump to its terminal. Summary cards
+widen automatically and grow to fit — long bullets wrap and indent under themselves
+rather than being cut off. Switching levels in the picker fires
 a sample card so you can see the size before committing.
 
 **Where the points come from:** the hook reads the session's last substantive

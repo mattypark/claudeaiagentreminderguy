@@ -11,6 +11,14 @@ Stack.__index = Stack
 
 local FADE = 0.18
 
+-- Close button geometry. `hit` is generous so it's easy to click; `indent`
+-- is how far the title shifts right to make room for it.
+local CLOSE = { x = 11, y = 11, size = 16, hit = 26, indent = 15 }
+
+local function inClose(x, y)
+  return x and y and x <= CLOSE.hit and y <= CLOSE.hit
+end
+
 function Stack.new()
   return setmetatable({ cards = {} }, Stack)
 end
@@ -38,7 +46,8 @@ function Stack:push(title, body, points, onClick)
   local maxW = (points and #points > 0) and theme.bubbleWideW or theme.bubbleMaxW
   local contentW = maxW - theme.bubblePad * 2
 
-  local titleW, titleH = measure(title, theme.titleSize, contentW)
+  local titleW, titleH = measure(title, theme.titleSize, contentW - CLOSE.indent)
+  titleW = titleW + CLOSE.indent
   local bodyW, bodyH = measure(body, theme.bodySize, contentW)
 
   -- Bullets are laid out one text element each so long ones wrap and indent
@@ -72,9 +81,19 @@ function Stack:push(title, body, points, onClick)
     strokeWidth = 1,
     frame = { x = 0, y = 0, w = w, h = h },
   }, {
+    -- Close button, element 2 — recoloured on hover, see the mouse callback.
+    type = "text",
+    text = styled("✕", theme.closeSize, palette.dim),
+    frame = { x = CLOSE.x, y = CLOSE.y, w = CLOSE.size, h = CLOSE.size },
+  }, {
     type = "text",
     text = styled(title, theme.titleSize, palette.accent),
-    frame = { x = theme.bubblePad, y = theme.bubblePad, w = contentW, h = titleH },
+    frame = {
+      x = theme.bubblePad + CLOSE.indent,
+      y = theme.bubblePad,
+      w = contentW - CLOSE.indent,
+      h = titleH,
+    },
   }, {
     type = "text",
     text = styled(body, theme.bodySize, palette.dim),
@@ -98,10 +117,22 @@ function Stack:push(title, body, points, onClick)
 
   local card = { canvas = canvas, w = w, h = h }
 
-  canvas:canvasMouseEvents(true, false, false, false)
-  canvas:mouseCallback(function()
-    self:remove(card)
-    if onClick then onClick() end
+  canvas:canvasMouseEvents(true, false, true, true)
+  canvas:mouseCallback(function(_, event, _, x, y)
+    if event == "mouseDown" then
+      -- The ✕ only dismisses; anywhere else jumps to that session's terminal.
+      self:remove(card)
+      if not inClose(x, y) and onClick then onClick() end
+      return
+    end
+
+    local hot = (event ~= "mouseExit") and inClose(x, y)
+    if hot ~= card.closeHot then
+      card.closeHot = hot
+      local palette = theme.palette()
+      canvas[2].text = styled("✕", theme.closeSize,
+                              hot and palette.accent or palette.dim)
+    end
   end)
 
   table.insert(self.cards, card)

@@ -61,5 +61,6 @@ Theme.titleSize  = 13
 Theme.bodySize   = 12
 Theme.menuSize   = 12.5
 Theme.smallSize  = 10.5
+Theme.closeSize  = 12    -- the small dismiss X on each card
 
 return Theme
