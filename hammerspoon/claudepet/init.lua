@@ -10,6 +10,7 @@ local Stack    = require("claudepet.stack")
 local Menu     = require("claudepet.menu")
 local Terminal = require("claudepet.terminal")
 local Voices   = require("claudepet.voices")
+local Sounds   = require("claudepet.sounds")
 local theme    = require("claudepet.theme")
 
 local M = {}
@@ -22,8 +23,13 @@ local DEDUPE_WINDOW = 5   -- seconds; ignore a repeat alert for the same session
 local RECENT_MAX = 8
 local HOTKEY = { { "ctrl", "alt", "cmd" }, "p" }
 
--- Wording comes from the chosen personality; only the sound is fixed per event.
-local SOUNDS = { done = "Hero", idle = "Submarine", ["end"] = "Bottle" }
+-- Wording comes from the chosen personality, the sound from your picks below.
+local DEFAULT_SOUNDS = { done = "Hero", idle = "Submarine", ["end"] = "Bottle" }
+local SOUND_EVENTS = {
+  { kind = "done",  label = "Session done" },
+  { kind = "idle",  label = "Waiting on you" },
+  { kind = "end",   label = "Session closed" },
+}
 
 -- How many summary bullets each detail level shows. nil = announcement only.
 local DETAIL_POINTS = { name = nil, summary = 3, full = 6 }
@@ -76,10 +82,13 @@ end
 
 -- ------------------------------------------------------------------- alerts
 
+local function soundFor(kind)
+  return (state.sounds and state.sounds[kind]) or DEFAULT_SOUNDS[kind] or DEFAULT_SOUNDS.done
+end
+
 local function play(kind)
   if state.muted then return end
-  local sound = hs.sound.getByName(SOUNDS[kind] or SOUNDS.done)
-  if sound then sound:play() end
+  Sounds.play(soundFor(kind))
 end
 
 local function focusEvent(event)
@@ -217,6 +226,55 @@ local function detailPage()
   return rows
 end
 
+local soundsPage   -- forward declaration; the pickers link back to it
+
+--- Picker for one event's sound. Choosing plays it straight away.
+local function soundPickerPage(event)
+  local rows = { { kind = "header", title = event.label:upper() } }
+  local current = soundFor(event.kind)
+
+  for _, option in ipairs(Sounds.all()) do
+    local active = (option.id == current)
+    rows[#rows + 1] = {
+      title = (active and "● " or "   ") .. option.label,
+      hint = active and "on" or (option.builtin and "built-in" or (option.silent and "" or "yours")),
+      fn = function()
+        state.sounds = state.sounds or {}
+        state.sounds[event.kind] = option.id
+        State.save(state)
+        Sounds.play(option.id)     -- hear it immediately
+      end,
+    }
+  end
+
+  rows[#rows + 1] = { kind = "sep" }
+  rows[#rows + 1] = { title = "← Back", submenu = function() return soundsPage() end }
+  return rows
+end
+
+--- The "Sound effects" page: one row per event, plus the drop folder.
+function soundsPage()
+  local rows = { { kind = "header", title = "SOUND EFFECTS" } }
+
+  for _, event in ipairs(SOUND_EVENTS) do
+    rows[#rows + 1] = {
+      title = event.label,
+      hint = "▸ " .. Sounds.label(soundFor(event.kind)),
+      submenu = function() return soundPickerPage(event) end,
+    }
+  end
+
+  rows[#rows + 1] = { kind = "sep" }
+  rows[#rows + 1] = {
+    title = "Add your own…",
+    preview = "drop .mp3 / .m4a / .wav / .mp4 in the folder, then Reload pet",
+    fn = function() Sounds.openFolder() end,
+  }
+  rows[#rows + 1] = { kind = "sep" }
+  rows[#rows + 1] = { title = "← Back", submenu = function() return actions() end }
+  return rows
+end
+
 --- The rows shared by the sprite menu and the menu bar item.
 function actions()
   local rows = {}
@@ -251,6 +309,11 @@ function actions()
     title = "Bubble detail",
     hint = "▸ " .. DETAIL_LABEL[state.detail].label,
     submenu = detailPage,
+  }
+  rows[#rows + 1] = {
+    title = "Sound effects",
+    hint = "▸ " .. Sounds.label(soundFor("done")),
+    submenu = soundsPage,
   }
   rows[#rows + 1] = {
     title = theme.mode == "night" and "Day mode" or "Night mode",
@@ -343,6 +406,11 @@ function M.debug()
     theme = theme.mode,
     voice = state.voice,
     detail = state.detail,
+    sounds = {
+      done = Sounds.label(soundFor("done")),
+      idle = Sounds.label(soundFor("idle")),
+      ["end"] = Sounds.label(soundFor("end")),
+    },
     offset = offset,
     position = { x = pet.baseX, y = pet.baseY },
     cards = #stack.cards,

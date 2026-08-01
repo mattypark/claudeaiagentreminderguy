@@ -22,17 +22,18 @@ else
 fi
 
 echo "==> Installing pet into $HS_DIR"
-mkdir -p "$HS_DIR/claudepet/assets"
+mkdir -p "$HS_DIR/claudepet/assets" "$HS_DIR/claudepet/sounds"
 cp "$REPO"/hammerspoon/claudepet/*.lua "$HS_DIR/claudepet/"
 cp "$REPO"/hammerspoon/claudepet/assets/pet.png "$HS_DIR/claudepet/assets/"
+cp "$REPO"/hammerspoon/claudepet/sounds/README.txt "$HS_DIR/claudepet/sounds/" 2>/dev/null || true
 
 if [ -f "$HS_DIR/init.lua" ] && ! grep -q 'require("claudepet")' "$HS_DIR/init.lua"; then
   echo "    appending to your existing init.lua"
+  # Deliberately does NOT enable hs.allowAppleScript — see SECURITY.md.
   {
     echo ""
     echo "-- Claude Pet"
     echo 'claudepet = require("claudepet")'
-    echo "hs.allowAppleScript(true)"
   } >> "$HS_DIR/init.lua"
 elif [ ! -f "$HS_DIR/init.lua" ]; then
   cp "$REPO/hammerspoon/init.lua" "$HS_DIR/init.lua"
@@ -107,6 +108,7 @@ Installed.
   • The pet is on the right edge of your screen — drag it anywhere.
   • Click him for the menu: personality, bubble detail, themes, hide, quit.
   • Menu bar icon (top right) or ⌃⌥⌘P to hide/show.
+  • Custom alert sounds: drop audio files in ~/.hammerspoon/claudepet/sounds/
   • Next time any Claude Code session finishes, he speaks.
 
 Launch-at-login was turned on for you, so he comes back after a reboot.

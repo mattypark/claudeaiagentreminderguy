@@ -15,6 +15,7 @@ moment any session stops — named, so you know exactly which terminal to go bac
 **[What it does](#what-it-actually-does)** ·
 **[Personalities](#personalities)** ·
 **[Summaries](#bubble-detail--see-what-the-session-actually-did)** ·
+**[Sounds](#sound-effects)** ·
 **[Manual](#manual--running-him-day-to-day)** ·
 **[Prompt library](#prompt-library)** ·
 **[How it works](#how-it-works)** ·
@@ -132,6 +133,7 @@ bar, top right.
 | **Mute alerts** | Cards still appear, no sound. |
 | **Personality** | How he talks — Direct, Kind, Hype, Chill, Butler, Gremlin. [Details](#personalities) |
 | **Bubble detail** | Name only, 3 summary points, or a full recap. [Details](#bubble-detail--see-what-the-session-actually-did) |
+| **Sound effects** | Pick the alert sound per event, built-in or your own. [Details](#sound-effects) |
 | **Day mode / Night mode** | White-and-orange or black-and-orange. |
 | **Test bubble** | Fires a sample card. |
 | **Reload pet** | Picks up changes you made to the files. |
@@ -162,6 +164,9 @@ do it.
   tone he announces sessions in, with live examples in the picker.
 - **Summaries on demand.** Ask for three bullet points, or a full recap of what
   the session finished and what's left for you.
+- **Your own alert sounds.** Fourteen macOS sounds built in, or drop an
+  `.mp3` / `.m4a` / `.wav` / `.mp4` in a folder and pick it — a different one per
+  event if you like.
 - **Night and day themes.** Black/orange or white/orange, toggled from the menu,
   remembered across restarts.
 - **Menu bar icon** to hide, mute, or quit. `⌃⌥⌘P` toggles him too.
@@ -254,6 +259,39 @@ tables, code fences and the boilerplate tips block are stripped out first.
 
 ---
 
+# Sound effects
+
+Menu → **Sound effects**. Each of the three events gets its own sound, and
+picking one plays it immediately so you can hear it before you commit.
+
+| Event | Default |
+|---|---|
+| Session done | `Hero` |
+| Waiting on you | `Submarine` |
+| Session closed | `Bottle` |
+
+**Built-in templates** — fourteen macOS system sounds: Hero, Submarine, Bottle,
+Glass, Ping, Pop, Purr, Tink, Blow, Frog, Funk, Morse, Sosumi, Basso. Plus
+**Silent**, if you want one event to say nothing while the others still chime.
+
+## Using your own
+
+1. Menu → **Sound effects** → **Add your own…** — the folder opens
+   (`~/.hammerspoon/claudepet/sounds/`)
+2. Drop audio in: **`.mp3` `.m4a` `.wav` `.aiff` `.mp4` `.aac` `.caf`**
+   (MP4 works — only its audio track is used)
+3. Menu → **Reload pet**
+4. Your file is now in the picker, listed under its filename
+
+Keep them short. A one-second chime beats a five-second clip you hear forty times
+a day. Overlapping alerts restart the sound rather than stacking it, so a burst of
+finished sessions won't turn into a wall of noise.
+
+Nothing is uploaded or converted — the files stay where you put them and are
+played locally by Hammerspoon.
+
+---
+
 # Manual — running him day to day
 
 ### Where the controls are
@@ -267,6 +305,7 @@ tables, code fences and the boilerplate tips block are stripped out first.
 | Silence alerts but keep him | menu → **Mute alerts** |
 | Switch black↔white | menu → **Day mode** / **Night mode** |
 | Change his tone | menu → **Personality** |
+| Change the alert sound | menu → **Sound effects** |
 | See what a session did | menu → **Bubble detail** → Summary or Full recap |
 | Close him completely | menu → **Quit pet** |
 | **Reopen after quitting** | `open -a Hammerspoon` — or Spotlight (`⌘Space`) → "Hammerspoon" |
@@ -380,6 +419,23 @@ Edit ~/.hammerspoon/claudepet/voices.lua: add a block with label, blurb, and 2-3
 phrasing variants each for done / idle / end, then add the key to Voices.order.
 Use ASCII emoticons like :) and o7, never unicode emoji. Reload Hammerspoon and
 fire a test bubble in the new voice so I can hear it.
+```
+
+</details>
+
+<details>
+<summary><b>Use my own alert sound</b></summary>
+
+```text
+Set up a custom alert sound for my Claude desktop pet: <DRAG THE AUDIO FILE IN,
+or give the path>
+
+Copy it into ~/.hammerspoon/claudepet/sounds/ (create the folder if needed).
+Supported: mp3, m4a, wav, aiff, mp4, aac, caf — if my file is something else,
+convert it with afconvert or ffmpeg first, and trim it to about a second if it's
+long. Then tell me to pick it from the pet's menu under Sound effects, after
+Reload pet. Tell me which event it'll apply to and how to set a different sound
+for the other two.
 ```
 
 </details>
@@ -598,9 +654,11 @@ hammerspoon/
     bubble.lua              # speech bubble canvas
     terminal.lua            # AppleScript tab focus by tty
     voices.lua              # the personalities — edit or add your own
+    sounds.lua              # sound picking; built-ins + your files
     theme.lua               # colors, sizes, timings
     state.lua               # hs.settings persistence
     assets/pet.png          # swap this to reskin
+    sounds/                 # drop your own alert audio here
 hooks/
   claude-pet.sh             # the Claude Code hook bridge
 install.sh
