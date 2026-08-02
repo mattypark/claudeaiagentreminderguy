@@ -24,9 +24,10 @@ local RECENT_MAX = 8
 local HOTKEY = { { "ctrl", "alt", "cmd" }, "p" }
 
 -- Wording comes from the chosen personality, the sound from your picks below.
-local DEFAULT_SOUNDS = { done = "Hero", idle = "Submarine", ["end"] = "Bottle" }
+local DEFAULT_SOUNDS = { done = "Hero", idle = "Submarine", ["end"] = "Bottle", ask = "Ping" }
 local SOUND_EVENTS = {
   { kind = "done",  label = "Session done" },
+  { kind = "ask",   label = "Asking you a question" },
   { kind = "idle",  label = "Waiting on you" },
   { kind = "end",   label = "Session closed" },
 }
@@ -131,7 +132,9 @@ local function alert(event)
 
   -- How much of what the session did to show alongside the announcement.
   local points = nil
-  local wanted = DETAIL_POINTS[state.detail]
+  -- A question's options aren't a recap, they're the question — always shown,
+  -- whatever detail level the recap bubbles are set to.
+  local wanted = (event.kind == "ask") and 6 or DETAIL_POINTS[state.detail]
   if wanted and event.points and #event.points > 0 then
     points = {}
     for index, point in ipairs(event.points) do
@@ -144,7 +147,9 @@ local function alert(event)
 end
 
 local function handle(event)
-  local key = eventKey(event)
+  -- Dedupe per kind: a question landing seconds after a recap is a real second
+  -- alert, not a repeat of the first.
+  local key = eventKey(event) .. "|" .. (event.kind or "done")
   local now = os.time()
   if lastAlert[key] and (now - lastAlert[key]) < DEDUPE_WINDOW then return end
   lastAlert[key] = now
@@ -322,6 +327,7 @@ function actions()
 
   rows[#rows + 1] = { kind = "sep" }
   rows[#rows + 1] = { title = "Test bubble", fn = function() M.test() end }
+  rows[#rows + 1] = { title = "Test question", fn = function() M.testAsk() end }
   rows[#rows + 1] = { title = "Reload pet", fn = function() hs.reload() end }
   rows[#rows + 1] = {
     title = "Quit pet",
@@ -408,6 +414,7 @@ function M.debug()
     detail = state.detail,
     sounds = {
       done = Sounds.label(soundFor("done")),
+      ask = Sounds.label(soundFor("ask")),
       idle = Sounds.label(soundFor("idle")),
       ["end"] = Sounds.label(soundFor("end")),
     },
@@ -434,6 +441,26 @@ function M.testSummary()
       "Left to do: decide whether refunds should be idempotent by request id",
       "Dev server still running on localhost:3000",
       "Nothing committed yet — say the word and I'll push",
+    },
+  })
+end
+
+--- Fire a fake question alert, to preview what an option picker looks like.
+function M.testAsk()
+  handle({
+    ts = os.time(),
+    kind = "ask",
+    session = "landing-page-rebuild",
+    session_id = "test-ask-" .. tostring(os.time()),
+    cwd = HOME,
+    tty = "",
+    hint = "Which stack should I build it in?  (1 of 4)",
+    points = {
+      "Next.js 16 + Tailwind (Recommended)",
+      "Vite + React + Tailwind",
+      "Plain HTML/CSS/JS, single file",
+      "then: Brand",
+      "then: Deploy target",
     },
   })
 end

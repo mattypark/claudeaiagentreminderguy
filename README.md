@@ -47,12 +47,12 @@ Do all of it, don't ask me to run anything myself:
 2. Run ./install.sh and show me any errors. It installs Hammerspoon via Homebrew
    if missing, copies the pet to ~/.hammerspoon/claudepet/, copies the hook to
    ~/.claude/hooks/claude-pet.sh, and appends the hook to my ~/.claude/settings.json
-   under Stop, SessionEnd and Notification — WITHOUT removing hooks I already have.
+   under Stop, SessionEnd, Notification and PreToolUse — WITHOUT removing hooks I already have.
    Back that file up first and tell me where the backup went.
 3. Confirm Hammerspoon is running (pgrep -x Hammerspoon) and that the pet appeared
    on the right edge of my screen. The pet turns on launch-at-login itself, so
    don't change any Hammerspoon preferences by hand.
-4. Verify my existing hooks still run — print the Stop/SessionEnd/Notification
+4. Verify my existing hooks still run — print the Stop/SessionEnd/Notification/PreToolUse
    entries from settings.json so I can see mine are intact alongside the new one.
 5. Do NOT enable Hammerspoon's AppleScript bridge. It's off by default on purpose
    and the install doesn't need it.
@@ -164,6 +164,10 @@ do it.
   tone he announces sessions in, with live examples in the picker.
 - **Summaries on demand.** Ask for three bullet points, or a full recap of what
   the session finished and what's left for you.
+- **Shows you the question.** When a session puts an option picker on screen, the
+  bubble carries the actual question and its choices — so you know whether it's
+  worth switching windows for without switching windows. Choices always show,
+  whatever detail level the recap bubbles are set to.
 - **Your own alert sounds.** Fourteen macOS sounds built in, or drop an
   `.mp3` / `.m4a` / `.wav` / `.mp4` in a folder and pick it — a different one per
   event if you like.
@@ -174,11 +178,12 @@ do it.
   Recording, no HTTP, no telemetry. Everything stays on your Mac —
   [details](SECURITY.md).
 
-Three events fire him:
+Four events fire him:
 
 | Event | Bubble |
 |---|---|
 | Claude finished a turn | *"NAME session is done — go look at it."* |
+| Claude is asking you a question | *"NAME has a question — pick an option."* + the question and its choices |
 | Claude is waiting on you | *"NAME is waiting on you."* |
 | Session closed | *"NAME session closed."* |
 
@@ -202,15 +207,16 @@ you hear it immediately. Your choice sticks across restarts.
 | **Butler** | `has concluded its work. At your convenience.` |
 | **Gremlin** | `done. i did the thing o7` |
 
-Each voice also has its own phrasing for *waiting on you* and *session closed*,
-with a couple of variants apiece so it doesn't repeat the identical sentence
-every time:
+Each voice also has its own phrasing for *asking you a question*, *waiting on
+you* and *session closed*, with a couple of variants apiece so it doesn't repeat
+the identical sentence every time:
 
 ```
+Direct   · ask  → "has a question — pick an option."
+Gremlin  · ask  → "wants you to pick one. choose wisely >:3"
 Kind     · idle → "has a question for you when you have a moment :)"
 Hype     · idle → "NEEDS YOU. RIGHT NOW >:O"
 Butler   · idle → "awaits your instruction."
-Gremlin  · idle → "is just sitting there. waiting. staring -_-"
 Chill    · end  → "session closed. later :]"
 ```
 
@@ -226,6 +232,7 @@ pirate = {
   label = "Pirate",
   blurb = "yarr",
   done = { "be finished, matey" },
+  ask  = { "be askin' ye somethin'" },
   idle = { "awaits yer orders" },
   ["end"] = { "session be closed" },
 },
@@ -261,12 +268,13 @@ tables, code fences and the boilerplate tips block are stripped out first.
 
 # Sound effects
 
-Menu → **Sound effects**. Each of the three events gets its own sound, and
+Menu → **Sound effects**. Each of the four events gets its own sound, and
 picking one plays it immediately so you can hear it before you commit.
 
 | Event | Default |
 |---|---|
 | Session done | `Hero` |
+| Asking you a question | `Ping` |
 | Waiting on you | `Submarine` |
 | Session closed | `Bottle` |
 
@@ -416,7 +424,7 @@ Add a new personality to my Claude desktop pet called "<NAME>".
 It should sound like: <DESCRIBE THE TONE>
 
 Edit ~/.hammerspoon/claudepet/voices.lua: add a block with label, blurb, and 2-3
-phrasing variants each for done / idle / end, then add the key to Voices.order.
+phrasing variants each for done / ask / idle / end, then add the key to Voices.order.
 Use ASCII emoticons like :) and o7, never unicode emoji. Reload Hammerspoon and
 fire a test bubble in the new voice so I can hear it.
 ```
@@ -463,7 +471,7 @@ My Claude session desktop pet stopped alerting me. Diagnose and fix it.
 Check in this order and tell me which one was wrong:
 1. Is the hook writing? tail ~/.claude/pet/inbox.jsonl while a session finishes.
 2. Is the hook wired? Look for claude-pet.sh in ~/.claude/settings.json under
-   Stop, SessionEnd and Notification.
+   Stop, SessionEnd, Notification and PreToolUse.
 3. Is Hammerspoon running? pgrep -x Hammerspoon. Have me open its Console
    (menu bar hammer icon -> Console) and run: hs.inspect(claudepet.debug())
 4. Is he just hidden or muted? Check the hidden/muted fields in that debug output.
@@ -484,7 +492,7 @@ Uninstall the Claude session desktop pet.
 Remove ~/.hammerspoon/claudepet/, remove the claudepet require line from
 ~/.hammerspoon/init.lua, delete ~/.claude/hooks/claude-pet.sh and
 ~/.claude/pet/, and strip the claude-pet.sh entries out of ~/.claude/settings.json
-under Stop, SessionEnd and Notification — leaving every other hook exactly as it is.
+under Stop, SessionEnd, Notification and PreToolUse — leaving every other hook exactly as it is.
 Back settings.json up first. Then quit Hammerspoon.
 
 Don't uninstall Hammerspoon itself unless I say so — ask me first.
@@ -518,7 +526,7 @@ directory so the watcher isn't woken by every other write under ~/.claude.
 
 THE HOOK  (~/.claude/hooks/claude-pet.sh)
 Reads the hook payload on stdin and appends:
-  {"ts","kind","session","session_id","named","hint","cwd","tty"}
+  {"ts","kind","session","session_id","named","hint","points","cwd","tty"}
 Resolve the session's display name in this priority order:
   1. ~/.claude/sessions/<pid>.json — find the record whose "sessionId" matches
      the payload's session_id, and use its "name". That file is where /rename
@@ -563,7 +571,7 @@ Split into modules: init.lua (wiring), pet.lua (sprite), bubble.lua, terminal.lu
     a submenu swaps the panel contents in place, with a "← Back" row. Use that for
     Recent sessions and for Personality — a flat list of everything is unreadable.
   - PERSONALITIES: a voices module holding several tones (direct, kind, hype,
-    chill, butler, gremlin), each with 2-3 phrasing variants for done/idle/end,
+    chill, butler, gremlin), each with 2-3 phrasing variants for done/ask/idle/end,
     picked at random so it doesn't repeat itself. The picker shows a live example
     line under each option and fires a sample bubble when you switch. Persist the
     choice. Keep the sound per event kind, not per voice.
@@ -579,6 +587,8 @@ Back the file up first, then APPEND without disturbing existing hooks:
   Stop                        → claude-pet.sh done
   SessionEnd (matcher "*")    → claude-pet.sh end
   Notification ("idle_prompt")→ claude-pet.sh idle
+  PreToolUse                  → claude-pet.sh ask
+    ("AskUserQuestion|ExitPlanMode")
 
 SPRITE
 I'll drop a PNG at ~/.hammerspoon/claudepet/assets/pet.png. If it has a solid
@@ -600,7 +610,7 @@ hide/show survives a reload, and confirm my pre-existing hooks still run.
 Claude Code session ends
         │
         ▼
-  Stop / SessionEnd / Notification hook
+  Stop / SessionEnd / Notification / PreToolUse hook
         │
         ▼
   ~/.claude/hooks/claude-pet.sh

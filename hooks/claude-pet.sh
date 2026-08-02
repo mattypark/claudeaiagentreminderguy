@@ -202,6 +202,49 @@ def summary_points(transcript_path, max_points=6, width=96):
     return trimmed
 
 
+def question_signals(payload, width=96, max_points=6):
+    """(hint, points) for a session that is putting a question on screen.
+
+    Claude Code renders its option pickers through the AskUserQuestion tool and
+    its plan approval through ExitPlanMode, so the PreToolUse payload carries the
+    question and its choices before you ever see them.
+    """
+    tool = payload.get("tool_name") or ""
+    args = payload.get("tool_input") or {}
+    if not isinstance(args, dict):
+        return "", []
+
+    def fit(text):
+        text = redact(" ".join(str(text).split()))
+        return text[: width - 1].rstrip() + "…" if len(text) > width else text
+
+    if tool == "ExitPlanMode":
+        return "wants to start coding", ["Approve the plan, or send it back"]
+
+    questions = args.get("questions")
+    if not isinstance(questions, list) or not questions:
+        return "", []
+
+    first = questions[0] if isinstance(questions[0], dict) else {}
+    hint = fit(first.get("question") or first.get("header") or "")
+    if len(questions) > 1:
+        hint = "%s  (1 of %d)" % (hint, len(questions))
+
+    points = []
+    for option in (first.get("options") or []):
+        if not isinstance(option, dict):
+            continue
+        points.append(fit(option.get("label") or ""))
+
+    # More than one question: name the rest so you know how long the wizard is.
+    for extra in questions[1:]:
+        if not isinstance(extra, dict):
+            continue
+        points.append("then: " + fit(extra.get("header") or extra.get("question") or ""))
+
+    return hint, [p for p in points if p][:max_points]
+
+
 def transcript_signals(transcript_path, limit=180):
     """(title, prompt) for a session that has no usable name yet.
 
@@ -262,6 +305,14 @@ hint = "" if named else prompt
 
 # What the session actually did — the pet shows as much of this as you ask for.
 points = summary_points(payload.get("transcript_path", "")) if KIND == "done" else []
+
+# A question on screen beats any prompt hint: say what it's actually asking.
+if KIND == "ask":
+    question, options = question_signals(payload)
+    if not question and not options:
+        sys.exit(0)          # nothing worth interrupting for
+    hint = question or hint
+    points = options
 
 event = {
     "ts": int(time.time()),

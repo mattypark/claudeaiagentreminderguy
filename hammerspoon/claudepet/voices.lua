@@ -13,6 +13,10 @@ Voices.all = {
       "session is done — go look at it.",
       "session finished. go look at it.",
     },
+    ask = {
+      "is asking you something.",
+      "has a question — pick an option.",
+    },
     idle = {
       "is waiting on you.",
       "needs an answer.",
@@ -28,6 +32,10 @@ Voices.all = {
     done = {
       "your session is done — would love for you to take a look :)",
       "all finished! come see what it did whenever you can :)",
+    },
+    ask = {
+      "has a question for you whenever you're ready :)",
+      "is asking you something — take your time :)",
     },
     idle = {
       "is waiting on you — no rush, just whenever you're free :)",
@@ -45,6 +53,10 @@ Voices.all = {
       "IS DONE. GO LOOK :D",
       "just wrapped — go see it, it cooked :D",
     },
+    ask = {
+      "NEEDS AN ANSWER. GO PICK ONE :O",
+      "is asking you something — hit it! >:D",
+    },
     idle = {
       "NEEDS YOU. RIGHT NOW >:O",
       "is stuck waiting on you — unblock it! :O",
@@ -60,6 +72,10 @@ Voices.all = {
     done = {
       "all wrapped up whenever you're ready :]",
       "finished. it'll be here when you get back :]",
+    },
+    ask = {
+      "is asking you something, whenever :]",
+      "has a question sitting there for you :]",
     },
     idle = {
       "is waiting on you, no pressure :]",
@@ -77,6 +93,10 @@ Voices.all = {
       "has concluded its work. At your convenience.",
       "is complete. I have taken the liberty of finishing up.",
     },
+    ask = {
+      "requests your decision on a matter.",
+      "has posed a question and awaits your selection.",
+    },
     idle = {
       "awaits your instruction.",
       "requires a word with you when convenient.",
@@ -92,6 +112,10 @@ Voices.all = {
     done = {
       "done. i did the thing o7",
       "finished. you're welcome >:3",
+    },
+    ask = {
+      "wants you to pick one. choose wisely >:3",
+      "is asking you something. staring. waiting 0_0",
     },
     idle = {
       "is bored. it wants you 0_0",

@@ -56,13 +56,17 @@ with open(path) as f:
     settings = json.load(f)
 
 hooks = settings.setdefault("hooks", {})
+# (event, matcher, kind, exact)
+# exact=True never joins a wildcard group: a PreToolUse hook sitting in a "*"
+# group would fire on every single tool call, not just the question tools.
 WIRING = [
-    ("Stop", None, "done"),
-    ("SessionEnd", "*", "end"),
-    ("Notification", "idle_prompt", "idle"),
+    ("Stop", None, "done", False),
+    ("SessionEnd", "*", "end", False),
+    ("Notification", "idle_prompt", "idle", False),
+    ("PreToolUse", "AskUserQuestion|ExitPlanMode", "ask", True),
 ]
 
-for event, matcher, kind in WIRING:
+for event, matcher, kind, exact in WIRING:
     command = 'bash "$HOME/.claude/hooks/claude-pet.sh" %s' % kind
     groups = hooks.setdefault(event, [])
 
@@ -77,7 +81,11 @@ for event, matcher, kind in WIRING:
 
     target = None
     for group in groups:
-        if matcher is None or group.get("matcher") in (matcher, "*", None):
+        if exact:
+            if group.get("matcher") == matcher:
+                target = group
+                break
+        elif matcher is None or group.get("matcher") in (matcher, "*", None):
             target = group
             break
 
